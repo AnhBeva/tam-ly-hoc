@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
-OUTPUT = ROOT / "Giao-trinh-tam-ly-hoc-50-tap.html"
+OUTPUT = ROOT / "Giao-trinh-tam-ly-hoc-60-tap.html"
 
 
 GROUPS = [
@@ -18,8 +18,49 @@ GROUPS = [
     ("Vô Thức, Thân Mật Và Nửa Sau Cuộc Đời", "Động cơ ẩn, tự ái, thao túng, tình yêu, giới, khủng hoảng, sáng tạo, bản sắc, trung niên và tâm linh.", range(31, 41)),
     ("Xã Hội, Luật Pháp Và Sức Khỏe", "Ý thức hệ, tâm-thân, pháp lý, tội phạm và điều kiện xã hội tác động lên con người.", range(41, 44)),
     ("Hiệu Suất, Biểu Tượng Và Không Gian", "Hiệu suất đỉnh cao, nghệ thuật, câu chuyện, biểu tượng và môi trường sống.", range(44, 47)),
-    ("Cộng Đồng, Gia Đình, Tổ Chức Và Tích Hợp", "Chữa lành tập thể, giáo dục gia đình, tổ chức nâng cao và bản đồ tối hậu 50 tập.", range(47, 51)),
+    ("Cộng Đồng, Gia Đình, Tổ Chức Và Tích Hợp", "Chữa lành tập thể, giáo dục gia đình, tổ chức nâng cao và bản đồ tích hợp.", range(47, 51)),
+    ("Nền Tảng Khoa Học Và Ứng Dụng Mở Rộng", "Đại cương, nhận thức nâng cao, động cơ, tham vấn, học đường, tiêu dùng, UX, truyền thông, tích cực và thực nghiệm.", range(51, 61)),
 ]
+
+
+COMMON_REFERENCES = [
+    ("APA Psychology Topics", "Bản đồ chủ đề chính thức của American Psychological Association.", "https://www.apa.org/topics/"),
+    ("OpenStax Psychology 2e", "Sách nhập môn tâm lý học mở, có cấu trúc đại học.", "https://openstax.org/books/psychology-2e/pages/index"),
+    ("Noba Project - Introduction to Psychology", "Kho học liệu mở do các học giả tâm lý học biên soạn.", "https://nobaproject.com/textbooks/introduction-to-psychology-the-full-noba-collection"),
+    ("MIT OpenCourseWare - Introduction to Psychology", "Khóa nhập môn tâm lý học miễn phí từ MIT OCW.", "https://ocw.mit.edu/courses/9-00-introduction-to-psychology-fall-2004/"),
+]
+
+
+REFERENCE_THEMES = {
+    "learning": [
+        ("Learning How to Learn - Coursera", "Khóa học phổ biến về cách học, trí nhớ và luyện tập.", "https://www.coursera.org/learn/learning-how-to-learn"),
+    ],
+    "social": [
+        ("Social Psychology - Coursera/Wesleyan", "Khóa học về ảnh hưởng xã hội, thuyết phục và hành vi nhóm.", "https://www.coursera.org/learn/social-psychology"),
+    ],
+    "behavior": [
+        ("Designing for Behavior Change - Google Books", "Sách ứng dụng behavioral science vào thiết kế sản phẩm và thay đổi hành vi.", "https://books.google.com/books/about/Designing_for_Behavior_Change.html?id=nu_pDwAAQBAJ"),
+    ],
+    "ux": [
+        ("The Design of Everyday Things - Google Books", "Sách nền về cognitive design, affordance, feedback và lỗi người dùng.", "https://books.google.com/books/about/The_Design_of_Everyday_Things.html?id=nVQPAAAAQBAJ"),
+    ],
+    "marketing": [
+        ("Influence: The Psychology of Persuasion - Google Books", "Sách kinh điển về thuyết phục và ảnh hưởng xã hội.", "https://books.google.com/books/about/Influence.html?id=5dfv0HJ1TEoC"),
+    ],
+    "science": [
+        ("APA Dictionary of Psychology", "Từ điển thuật ngữ tâm lý học của APA.", "https://dictionary.apa.org/"),
+        ("APA PsycInfo", "Cơ sở dữ liệu học thuật chuyên ngành tâm lý học.", "https://www.apa.org/pubs/databases/psycinfo"),
+    ],
+}
+
+
+CHAPTER_REFERENCE_THEMES = {
+    **{n: ["learning", "science"] for n in [1, 3, 22, 23, 29, 51, 52, 60]},
+    **{n: ["behavior", "marketing"] for n in [4, 6, 14, 15, 27, 33, 41, 56, 58]},
+    **{n: ["social", "science"] for n in [5, 7, 8, 16, 17, 18, 19, 20, 24, 25, 34, 35, 47, 48, 49, 54, 55]},
+    **{n: ["ux", "behavior"] for n in [27, 46, 57]},
+    **{n: ["learning", "behavior"] for n in [11, 12, 13, 21, 28, 42, 43, 44, 53, 59]},
+}
 
 
 def chapter_number(path: Path) -> int:
@@ -41,7 +82,42 @@ def inline_md(text: str) -> str:
     escaped = html.escape(text)
     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
     escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
+    escaped = re.sub(
+        r"\[([^\]]+)\]\((https?://[^)]+)\)",
+        r'<a href="\2" target="_blank" rel="noopener">\1</a>',
+        escaped,
+    )
     return escaped
+
+
+def chapter_references(number: int) -> str:
+    refs = list(COMMON_REFERENCES)
+    for theme in CHAPTER_REFERENCE_THEMES.get(number, ["science"]):
+        refs.extend(REFERENCE_THEMES.get(theme, []))
+
+    seen = set()
+    items = []
+    for title, desc, url in refs:
+        if url in seen:
+            continue
+        seen.add(url)
+        items.append(
+            "<a class=\"reference-link\" target=\"_blank\" rel=\"noopener\" "
+            f"href=\"{html.escape(url)}\">"
+            f"<strong>{html.escape(title)}</strong>"
+            f"<span>{html.escape(desc)}</span>"
+            "</a>"
+        )
+
+    return (
+        "<section class=\"reference-card\">"
+        "<div><span>Nguồn kiểm chứng</span><h2>Tài Liệu Tham Khảo, Sách Và Khóa Học</h2>"
+        "<p>Các link này là nguồn nền để đối chiếu khái niệm, thuật ngữ và hướng học tiếp. "
+        "Nội dung giáo trình là bản diễn giải thực dụng, không thay thế đào tạo/hành nghề chuyên môn.</p></div>"
+        f"<div class=\"reference-grid\">{''.join(items)}</div>"
+        "<p class=\"reference-note\">Cập nhật kiểm tra link: 06/05/2026.</p>"
+        "</section>"
+    )
 
 
 def parse_table(lines: list[str]) -> str:
@@ -369,6 +445,7 @@ def main() -> None:
         f"<p>{html.escape(c['subtitle'])}</p>"
         f"<button class=\"complete-btn\" data-complete=\"{c['number']}\">Đánh dấu đã học</button></div>"
         f"<div class=\"chapter-body\">{c['content']}</div>"
+        f"{chapter_references(c['number'])}"
         "</article>"
         for c in chapters
     )
@@ -378,7 +455,7 @@ def main() -> None:
 <head>
   <meta charset=\"utf-8\">
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
-  <title>Giáo Trình Tâm Lý Học 50 Tập</title>
+  <title>Giáo Trình Tâm Lý Học 60 Tập</title>
   <style>
     :root {{
       color-scheme: light;
@@ -634,6 +711,30 @@ def main() -> None:
       border-radius: 14px; background: #fff; border: 1px solid rgba(0,0,0,.07);
       color: #1d1d1f; font-size: 16px; font-weight: 750;
     }}
+    .reference-card {{
+      background: #fff; border: 1px solid var(--line); border-radius: 28px;
+      padding: clamp(22px,4vw,42px); box-shadow: 0 12px 38px rgba(0,0,0,.05);
+      margin: 28px 0 0;
+    }}
+    .reference-card > div:first-child span {{
+      color: var(--blue); font-size: 12px; font-weight: 900; text-transform: uppercase;
+    }}
+    .reference-card h2 {{
+      margin: 8px 0 8px; font-size: clamp(26px,3vw,40px); line-height: 1.08; letter-spacing: -0.02em;
+    }}
+    .reference-card p {{ color: var(--muted); font-size: 16px; line-height: 1.55; max-width: 840px; }}
+    .reference-grid {{
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 12px; margin-top: 18px;
+    }}
+    .reference-link {{
+      display: grid; gap: 8px; align-content: start; min-height: 124px; padding: 16px;
+      border-radius: 18px; background: linear-gradient(180deg, #fbfdff, #f6f8fb);
+      border: 1px solid rgba(0,0,0,.075); transition: transform .18s ease, border-color .18s ease;
+    }}
+    .reference-link:hover {{ transform: translateY(-2px); border-color: rgba(0,113,227,.32); }}
+    .reference-link strong {{ color: #1d1d1f; font-size: 16px; line-height: 1.25; }}
+    .reference-link span {{ color: var(--muted); font-size: 13px; line-height: 1.4; }}
+    .reference-note {{ margin-bottom: 0; font-size: 13px !important; }}
     hr {{ border: 0; border-top: 1px solid var(--line); margin: 38px 0; }}
     .anchor:hover {{ color: var(--blue); }}
     .no-results {{ display: none; text-align: center; padding: 34px; color: var(--muted); }}
@@ -688,7 +789,7 @@ def main() -> None:
       <section class=\"overview\">
         <div class=\"section-title\">
           <h2>Bản đồ học tập</h2>
-          <p>Chọn một Chương hoặc một tập để bắt đầu. {len(chapters)} tập được sắp xếp theo 9 Chương: từ nền tảng cá nhân, lãnh đạo, não bộ, hệ thống, tầng sâu đến xã hội, gia đình, tổ chức và bản đồ tích hợp.</p>
+          <p>Chọn một Chương hoặc một tập để bắt đầu. {len(chapters)} tập được sắp xếp theo {len(GROUPS)} Chương: từ nền tảng cá nhân, lãnh đạo, não bộ, hệ thống, tầng sâu đến ứng dụng mở rộng, UX, truyền thông và tư duy khoa học.</p>
         </div>
         <div class=\"theme-stack\" id=\"cardGrid\">{overview_cards}</div>
         <div class=\"no-results\" id=\"noResults\">Không tìm thấy nội dung phù hợp.</div>
@@ -760,7 +861,7 @@ def main() -> None:
       const target = document.querySelector(requested) || document.querySelector('#tap-1');
       chapters.forEach(chapter => chapter.classList.toggle('active-chapter', chapter === target));
       navItems.forEach(item => item.classList.toggle('active', item.getAttribute('href') === '#' + target.id));
-      document.title = `${{target.querySelector('.chapter-hero h1').textContent}} | Giáo Trình Tâm Lý Học 50 Tập`;
+      document.title = `${{target.querySelector('.chapter-hero h1').textContent}} | Giáo Trình Tâm Lý Học 60 Tập`;
       if (shouldScroll) {{
         target.scrollIntoView({{ block: 'start' }});
       }}

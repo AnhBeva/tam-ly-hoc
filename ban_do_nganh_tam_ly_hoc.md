@@ -192,3 +192,97 @@ Một con người đầy đủ gồm:
 | Xã hội | Xã hội, văn hóa, cộng đồng, truyền thông | Con người trong nhóm, văn hóa, xã hội |
 | Ứng dụng | Lâm sàng, tham vấn, tổ chức, pháp lý, tiêu dùng, human factors | Giải quyết vấn đề thực tế trong đời sống và nghề nghiệp |
 
+---
+
+# 12. Đối chiếu bản đồ ngành với giáo trình 60 tập
+
+## 12.1 Kết luận cập nhật
+
+Bộ giáo trình đã được mở rộng từ 50 lên **60 tập** để phủ đủ hơn các nhánh chính trong bản đồ ngành Tâm lý học.
+
+Nếu 50 tập đầu mạnh về **ứng dụng lãnh đạo, hiểu con người, tổ chức, văn hóa, quan hệ, sang chấn, ý nghĩa và xã hội**, thì 10 tập mới bổ sung phần còn mỏng hơn:
+
+| Khoảng trống trước đây | Tập bổ sung | Ý nghĩa |
+|---|---:|---|
+| Tâm lý học đại cương đúng nghĩa | 51 | Có bản đồ nền về cảm giác, tri giác, chú ý, trí nhớ, tư duy, cảm xúc, động cơ, hành vi |
+| Tâm lý nhận thức nâng cao | 52 | Hiểu tải nhận thức, mental models, ngôn ngữ, giải quyết vấn đề |
+| Động cơ học | 53 | Hiểu vì sao con người muốn, trì hoãn, bền bỉ hoặc mất động lực |
+| Tham vấn | 54 | Phân biệt tham vấn, coaching, trị liệu; biết hỗ trợ mà không làm thay |
+| Học đường và tuổi thiếu niên | 55 | Bổ sung hệ sinh thái gia đình - trường học - bạn bè - mạng xã hội |
+| Tâm lý tiêu dùng và thương hiệu | 56 | Phục vụ marketing, bán hàng, sản phẩm và đạo đức ảnh hưởng |
+| Human Factors / UX | 57 | Thiết kế sản phẩm, AI, thiết bị và quy trình quanh giới hạn con người |
+| Tâm lý truyền thông | 58 | Hiểu tin giả, framing, thuật toán, ảnh hưởng đại chúng |
+| Tâm lý tích cực | 59 | Cân bằng chữa lành với flourishing, strengths, resilience, meaning |
+| Tâm lý thực nghiệm và phương pháp khoa học | 60 | Chống ngộ nhận, đọc nghiên cứu và ứng dụng bằng chứng thận trọng |
+
+## 12.2 Bản đồ 60 tập theo các Chương lớn
+
+| Chương | Tập | Trọng tâm |
+|---|---:|---|
+| 1. Nền tảng cá nhân | 1-4 | Bản đồ gốc, cảm xúc, quyết định, thói quen |
+| 2. Lãnh đạo, giao tiếp và dùng người | 5-10 | Quyền lực, thuyết phục, nhân sự, quan hệ, tiền bạc, trưởng thành nội tâm |
+| 3. Não bộ, phát triển và hành vi | 11-15 | Neuroscience, tuổi thơ, lâm sàng, hành vi, kinh tế học hành vi |
+| 4. Hệ thống, văn hóa và đạo đức | 16-20 | Tổ chức, văn hóa Á Đông, coaching, nhóm, đạo đức |
+| 5. Các tầng sâu của con người | 21-30 | Tiến hóa, đo lường, học tập, đạo đức, xã hội, ý nghĩa, công nghệ, trauma, nghiên cứu, tích hợp |
+| 6. Vô thức, thân mật và nửa sau cuộc đời | 31-40 | Vô thức, tự ái, thao túng, tình yêu, giới, khủng hoảng, sáng tạo, danh tính, trung niên, tâm linh |
+| 7. Xã hội, luật pháp và sức khỏe | 41-43 | Chính trị, tâm-thân, pháp lý và tội phạm |
+| 8. Hiệu suất, biểu tượng và không gian | 44-46 | Hiệu suất, nghệ thuật, câu chuyện, môi trường sống |
+| 9. Cộng đồng, gia đình, tổ chức và tích hợp | 47-50 | Cộng đồng, giáo dục gia đình, tổ chức nâng cao, bản đồ tích hợp |
+| 10. Nền tảng khoa học và ứng dụng mở rộng | 51-60 | Đại cương, nhận thức, động cơ, tham vấn, học đường, tiêu dùng, UX, truyền thông, tích cực, thực nghiệm |
+
+## 12.3 Mức độ phủ ngành sau khi mở rộng
+
+| Nhánh trong bản đồ ngành | Tập liên quan | Mức phủ |
+|---|---|---|
+| Tâm lý học đại cương | 1, 51 | Tốt |
+| Tâm lý học nhận thức | 3, 23, 29, 52, 60 | Tốt |
+| Tâm lý học hành vi | 4, 14, 15, 53 | Tốt |
+| Tâm lý sinh học/thần kinh | 11, 42 | Khá tốt |
+| Tâm lý phát triển | 12, 39, 48, 55 | Tốt |
+| Tâm lý nhân cách/đo lường | 22, 24, 31, 32, 38 | Tốt |
+| Tâm lý cảm xúc | 2, 10, 28, 59 | Tốt |
+| Tâm lý học tập/giáo dục | 23, 48, 55 | Tốt |
+| Tâm lý xã hội/văn hóa | 17, 19, 25, 35, 41, 47, 58 | Tốt |
+| Lâm sàng/tham vấn | 13, 28, 54 | Khá tốt, không thay thế đào tạo hành nghề |
+| Tổ chức - công nghiệp | 5, 7, 16, 19, 36, 49 | Tốt |
+| Sức khỏe | 42 | Nhập môn tốt |
+| Pháp lý/pháp y | 43 | Nhập môn tốt |
+| Tiêu dùng/marketing | 15, 45, 56 | Tốt |
+| Thể thao/hiệu suất | 36, 44 | Khá tốt |
+| Cộng đồng | 47 | Nhập môn tốt |
+| Môi trường | 46 | Nhập môn tốt |
+| Human Factors/UX | 27, 57 | Tốt |
+| Truyền thông | 27, 41, 58 | Tốt |
+| Tích cực | 26, 40, 59 | Tốt |
+| Thực nghiệm/định lượng/phương pháp | 22, 29, 60 | Tốt ở mức người ứng dụng |
+
+## 12.4 Nguyên tắc kiểm chứng nội dung
+
+Mỗi tập trong bản HTML hiện có phần **Tài Liệu Tham Khảo, Sách Và Khóa Học** để người học kiểm chứng và học sâu hơn.
+
+Các nguồn nền ưu tiên:
+
+| Nguồn | Vai trò |
+|---|---|
+| APA Psychology Topics | Đối chiếu thuật ngữ và chủ đề chuyên ngành |
+| APA Dictionary of Psychology | Kiểm tra định nghĩa thuật ngữ |
+| OpenStax Psychology 2e | Sách nhập môn tâm lý học mở, cấu trúc đại học |
+| Noba Project | Bài học mở do các học giả tâm lý học biên soạn |
+| MIT OpenCourseWare Introduction to Psychology | Khóa nhập môn đại học miễn phí |
+| Coursera/edX | Học tiếp các mảng xã hội, học tập, hành vi, human behavior |
+| Sách kinh điển có link nhà xuất bản/Google Books/O'Reilly | Kiểm chứng và đào sâu chủ đề ứng dụng |
+
+## 12.5 Giới hạn cần ghi nhớ
+
+Giáo trình này được thiết kế cho **hiểu biết thực dụng, lãnh đạo, tự học và phát triển con người**.
+
+Không dùng giáo trình để:
+
+- Tự chẩn đoán bệnh lý tâm thần.
+- Thay thế trị liệu, tham vấn hoặc điều trị y khoa.
+- Gắn nhãn người khác bằng thuật ngữ tâm lý.
+- Dùng hiểu biết tâm lý để thao túng, làm giảm tự chủ hoặc gây lệ thuộc.
+
+Nguyên tắc cuối cùng:
+
+> Hiểu tâm lý học đúng không phải để kiểm soát con người, mà để nhìn con người đầy đủ hơn, can thiệp khiêm tốn hơn và có trách nhiệm hơn.
