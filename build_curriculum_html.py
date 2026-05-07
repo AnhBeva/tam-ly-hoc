@@ -115,7 +115,102 @@ def chapter_references(number: int) -> str:
         "<p>Các link này là nguồn nền để đối chiếu khái niệm, thuật ngữ và hướng học tiếp. "
         "Nội dung giáo trình là bản diễn giải thực dụng, không thay thế đào tạo/hành nghề chuyên môn.</p></div>"
         f"<div class=\"reference-grid\">{''.join(items)}</div>"
-        "<p class=\"reference-note\">Cập nhật kiểm tra link: 06/05/2026.</p>"
+        "<p class=\"reference-note\">Cập nhật kiểm tra link: 07/05/2026.</p>"
+        "</section>"
+    )
+
+
+def extract_final_sentence(md: str) -> str:
+    blockquotes = [
+        line.lstrip(">").strip()
+        for line in md.splitlines()
+        if line.strip().startswith(">")
+    ]
+    if blockquotes:
+        return blockquotes[-1]
+
+    for line in md.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("**Một câu cần nhớ:**"):
+            return stripped.replace("**Một câu cần nhớ:**", "").strip()
+    return "Hiểu đúng bản chất, chọn một hành vi nhỏ để áp dụng và đo lại trong đời sống thật."
+
+
+def extract_application_questions(md: str, title: str) -> list[str]:
+    questions: list[str] = []
+    seen = set()
+    cleaned = re.sub(r"\[[^\]]+\]\([^)]+\)", "", md)
+
+    for match in re.finditer(r"([^?\n|]{12,160}\?)", cleaned):
+        question = match.group(1)
+        question = re.sub(r"^[\s\-*>\d.]+", "", question).strip()
+        question = re.sub(r"\*\*|`", "", question).strip()
+        question = question.strip("| ").strip()
+        if not question or question in seen:
+            continue
+        if question.lower().startswith(("http", "www")):
+            continue
+        seen.add(question)
+        questions.append(question)
+        if len(questions) >= 8:
+            break
+
+    fallback = [
+        f"Tập này đang giúp tôi nhìn rõ vấn đề nào trong bản thân hoặc công việc?",
+        "Tôi đang lặp lại hành vi nào mà trước đây chưa hiểu bản chất?",
+        "Nếu áp dụng một ý duy nhất trong tuần này, tôi sẽ chọn ý nào?",
+        "Ai trong đội nhóm/gia đình sẽ được lợi nếu tôi hiểu chủ đề này tốt hơn?",
+        "Dữ kiện nào có thể kiểm chứng thay vì chỉ tin vào cảm giác của tôi?",
+        "Can thiệp nhỏ nhất tôi có thể thử trong 7 ngày tới là gì?",
+        "Nếu áp dụng sai chủ đề này, rủi ro đạo đức hoặc quan hệ là gì?",
+        "Tôi sẽ đo sự thay đổi bằng dấu hiệu cụ thể nào?",
+    ]
+    for question in fallback:
+        if len(questions) >= 8:
+            break
+        if question not in seen:
+            questions.append(question)
+            seen.add(question)
+
+    return questions
+
+
+def chapter_learning_card(chapter: dict) -> str:
+    title = display_title(chapter["title"], chapter["number"])
+    final = chapter["final"]
+    questions = chapter["questions"]
+    summary_items = [
+        ("Bản chất", chapter["subtitle"] or "Nắm bản chất trước khi áp dụng kỹ thuật."),
+        ("Cần nhớ", final),
+        ("Áp dụng", "Chọn một tình huống thật, viết lại bằng khái niệm của tập này, rồi thử một hành vi nhỏ."),
+        ("Kiểm chứng", "Quan sát dữ kiện trước-sau thay vì chỉ dựa vào cảm giác hiểu bài."),
+    ]
+    summary_html = "".join(
+        "<div class=\"summary-tile\">"
+        f"<span>{html.escape(label)}</span>"
+        f"<p>{html.escape(text)}</p>"
+        "</div>"
+        for label, text in summary_items
+    )
+    question_html = "".join(
+        "<li>"
+        f"<span>{index:02d}</span>"
+        f"<p>{html.escape(question)}</p>"
+        "</li>"
+        for index, question in enumerate(questions, 1)
+    )
+    return (
+        "<section class=\"learning-card\">"
+        "<div class=\"learning-head\">"
+        f"<span>Tóm tắt ứng dụng - Tập {chapter['number']:02d}</span>"
+        f"<h2>{html.escape(title)}</h2>"
+        "<p>Đọc phần này trước để có khung nhớ nhanh, sau đó dùng câu hỏi ứng dụng để nối bài học với đời sống thật.</p>"
+        "</div>"
+        f"<div class=\"summary-grid\">{summary_html}</div>"
+        "<div class=\"application-questions\">"
+        "<h3>5-10 câu hỏi ứng dụng</h3>"
+        f"<ol>{question_html}</ol>"
+        "</div>"
         "</section>"
     )
 
@@ -394,6 +489,8 @@ def main() -> None:
                 "subtitle": subtitle,
                 "content": content,
                 "word_count": len(md.split()),
+                "final": extract_final_sentence(md),
+                "questions": extract_application_questions(md, title),
             }
         )
         all_toc.append((number, title, subtitle, toc))
@@ -414,7 +511,13 @@ def main() -> None:
             nav_sections.append(
                 f"<div class=\"nav-section\"><div class=\"nav-heading\">Chương {group_index:02d}<b>{html.escape(group_title)}</b></div>{''.join(links)}</div>"
             )
-    nav_items = "\n".join(nav_sections)
+    nav_items = (
+        "<a class=\"nav-item home-link active\" href=\"#home\" data-chapter=\"home\" "
+        "data-title=\"trang chủ giới thiệu tổng quan tâm lý học ứng dụng cấu trúc lộ trình\">"
+        "<span>⌂</span><strong>Trang Chủ & Tổng Quan</strong></a>"
+        + "\n"
+        + "\n".join(nav_sections)
+    )
 
     group_sections = []
     for group_index, (group_title, group_desc, number_range) in enumerate(GROUPS, 1):
@@ -444,6 +547,7 @@ def main() -> None:
         f"<div class=\"chapter-hero\"><span>Tập {c['number']:02d}</span><h1>{html.escape(display_title(c['title'], c['number']))}</h1>"
         f"<p>{html.escape(c['subtitle'])}</p>"
         f"<button class=\"complete-btn\" data-complete=\"{c['number']}\">Đánh dấu đã học</button></div>"
+        f"{chapter_learning_card(c)}"
         f"<div class=\"chapter-body\">{c['content']}</div>"
         f"{chapter_references(c['number'])}"
         "</article>"
@@ -565,6 +669,65 @@ def main() -> None:
     }}
     .stat strong {{ display: block; font-size: 28px; }}
     .stat span {{ color: var(--muted); font-size: 13px; }}
+    .home-view.is-hidden {{ display: none; }}
+    .intro-band {{ padding: 58px 6vw 18px; }}
+    .intro-shell {{ max-width: 1280px; margin: 0 auto; display: grid; gap: 18px; }}
+    .intro-panel {{
+      background: rgba(255,255,255,.78); border: 1px solid var(--line); border-radius: 32px;
+      padding: clamp(24px,4vw,46px); box-shadow: 0 18px 58px rgba(0,0,0,.06);
+    }}
+    .intro-panel h2 {{ margin: 0; font-size: clamp(34px,5vw,68px); line-height: .98; letter-spacing: -0.025em; }}
+    .intro-panel > p {{ max-width: 880px; color: #424245; font-size: clamp(18px,2vw,24px); line-height: 1.45; }}
+    .principle-grid, .path-grid, .structure-grid {{
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 14px;
+    }}
+    .principle-card, .path-card, .structure-card {{
+      background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 20px;
+      box-shadow: 0 12px 34px rgba(0,0,0,.045);
+    }}
+    .principle-card span, .path-card span, .structure-card span {{
+      color: var(--blue); font-size: 12px; font-weight: 900; text-transform: uppercase;
+    }}
+    .principle-card h3, .path-card h3, .structure-card h3 {{ margin: 8px 0; font-size: 22px; letter-spacing: -0.01em; }}
+    .principle-card p, .path-card p, .structure-card p {{ margin: 0; color: var(--muted); line-height: 1.5; }}
+    .path-card {{ display: grid; gap: 10px; align-content: start; }}
+    .path-card a {{
+      justify-self: start; display: inline-flex; align-items: center; min-height: 36px; padding: 8px 12px;
+      border-radius: 999px; background: #1d1d1f; color: #fff; font-size: 13px; font-weight: 800;
+    }}
+    .learning-card {{
+      background: #fff; border: 1px solid var(--line); border-radius: 28px;
+      padding: clamp(22px,4vw,42px); margin: 0 0 28px; box-shadow: 0 12px 38px rgba(0,0,0,.05);
+    }}
+    .learning-head span {{
+      color: var(--blue); font-size: 12px; font-weight: 900; text-transform: uppercase;
+    }}
+    .learning-head h2 {{ margin: 8px 0; font-size: clamp(28px,3.4vw,46px); line-height: 1.04; letter-spacing: -0.02em; }}
+    .learning-head p {{ margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; max-width: 820px; }}
+    .summary-grid {{
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; margin: 20px 0;
+    }}
+    .summary-tile {{
+      border: 1px solid rgba(0,0,0,.07); border-radius: 18px; padding: 16px;
+      background: linear-gradient(180deg, #fbfdff, #f7f9fb);
+    }}
+    .summary-tile span {{ color: var(--blue); font-size: 12px; font-weight: 900; }}
+    .summary-tile p {{ margin: 8px 0 0; color: #2f2f32; line-height: 1.5; font-size: 15px; }}
+    .application-questions {{
+      border-radius: 22px; padding: 18px; background: linear-gradient(135deg, rgba(0,113,227,.08), rgba(48,209,88,.07));
+      border: 1px solid rgba(0,113,227,.13);
+    }}
+    .application-questions h3 {{ margin: 0 0 12px; font-size: 22px; }}
+    .application-questions ol {{ display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }}
+    .application-questions li {{
+      display: grid; grid-template-columns: 38px minmax(0,1fr); gap: 12px; align-items: start;
+      padding: 12px; border-radius: 15px; background: rgba(255,255,255,.82); border: 1px solid rgba(0,0,0,.055);
+    }}
+    .application-questions li span {{
+      width: 34px; height: 30px; display: grid; place-items: center; border-radius: 10px;
+      background: #1d1d1f; color: #fff; font-size: 12px; font-weight: 900;
+    }}
+    .application-questions li p {{ margin: 2px 0 0; color: #1d1d1f; line-height: 1.45; font-weight: 650; }}
     .overview {{ padding: 54px 6vw; }}
     .section-title {{ max-width: var(--content); margin: 0 auto 24px; }}
     .section-title h2 {{ margin: 0; font-size: clamp(30px,4vw,54px); letter-spacing: -0.02em; }}
@@ -774,26 +937,64 @@ def main() -> None:
       <nav id=\"nav\">{nav_items}</nav>
     </aside>
     <main>
-      <section class=\"hero\" id=\"top\">
-        <div class=\"hero-inner\">
-          <p class=\"eyebrow\">Bản HTML tổng hợp từ {len(chapters)} tập</p>
-          <h1>Hiểu con người rõ hơn. Lãnh đạo sâu hơn. Sống tỉnh hơn.</h1>
-          <p class=\"lead\">Một trải nghiệm đọc gọn, đẹp và có hệ thống: từ cảm xúc, quyết định, thói quen, quyền lực, quan hệ, văn hóa, neuroscience đến bản đồ tích hợp về con người.</p>
-          <div class=\"hero-stats\">
-            <div class=\"stat\"><strong>{len(chapters)}</strong><span>Tập học có cấu trúc</span></div>
-            <div class=\"stat\"><strong>4 tuần</strong><span>Lộ trình thực hành mỗi tập</span></div>
-            <div class=\"stat\"><strong>1 file</strong><span>Dễ đọc, tìm kiếm, in/PDF</span></div>
+      <div class=\"home-view\" id=\"homeView\">
+        <section class=\"hero\" id=\"home\">
+          <div class=\"hero-inner\">
+            <p class=\"eyebrow\">Trang chủ giáo trình tâm lý học ứng dụng</p>
+            <h1>Hiểu tâm lý học để hiểu người, hiểu mình và hành động đúng hơn.</h1>
+            <p class=\"lead\">Tâm lý học là khoa học giúp ta đọc các tầng của con người: não bộ, cảm xúc, nhận thức, động cơ, thói quen, quan hệ, văn hóa, tổ chức, xã hội và ý nghĩa. Giáo trình này biến bản đồ rộng đó thành 60 bài học ngắn gọn, trực quan và có thể áp dụng ngay.</p>
+            <div class=\"hero-stats\">
+              <div class=\"stat\"><strong>{len(chapters)}</strong><span>Tập học có cấu trúc</span></div>
+              <div class=\"stat\"><strong>{len(GROUPS)}</strong><span>Chương lớn để chọn theo mục tiêu</span></div>
+              <div class=\"stat\"><strong>1 hành vi</strong><span>Áp dụng nhỏ sau mỗi bài</span></div>
+            </div>
           </div>
-        </div>
-      </section>
-      <section class=\"overview\">
-        <div class=\"section-title\">
-          <h2>Bản đồ học tập</h2>
-          <p>Chọn một Chương hoặc một tập để bắt đầu. {len(chapters)} tập được sắp xếp theo {len(GROUPS)} Chương: từ nền tảng cá nhân, lãnh đạo, não bộ, hệ thống, tầng sâu đến ứng dụng mở rộng, UX, truyền thông và tư duy khoa học.</p>
-        </div>
-        <div class=\"theme-stack\" id=\"cardGrid\">{overview_cards}</div>
-        <div class=\"no-results\" id=\"noResults\">Không tìm thấy nội dung phù hợp.</div>
-      </section>
+        </section>
+        <section class=\"intro-band\">
+          <div class=\"intro-shell\">
+            <div class=\"intro-panel\">
+              <h2>Giá trị cốt lõi của giáo trình</h2>
+              <p>Không học tâm lý để gắn nhãn người khác. Học để nhìn đúng tầng vấn đề, bớt phản ứng tự động, thiết kế môi trường tốt hơn, giao tiếp rõ hơn, lãnh đạo có trách nhiệm hơn và sống sâu hơn.</p>
+              <div class=\"principle-grid\">
+                <div class=\"principle-card\"><span>01</span><h3>Hiểu bản chất</h3><p>Mỗi bài bắt đầu từ first principles: con người đang cần gì, sợ gì, tin gì và hệ thống đang thưởng điều gì.</p></div>
+                <div class=\"principle-card\"><span>02</span><h3>Dễ áp dụng</h3><p>Mỗi bài có công cụ, câu hỏi và lộ trình 4 tuần để chuyển hiểu biết thành hành vi cụ thể.</p></div>
+                <div class=\"principle-card\"><span>03</span><h3>Có kiểm chứng</h3><p>Mỗi tập có nguồn tham khảo, sách hoặc khóa học nền để người đọc học sâu và đối chiếu thuật ngữ.</p></div>
+                <div class=\"principle-card\"><span>04</span><h3>Có đạo đức</h3><p>Hiểu tâm lý phải làm con người rõ hơn và tự chủ hơn, không phải để thao túng hoặc kiểm soát.</p></div>
+              </div>
+            </div>
+            <div class=\"intro-panel\">
+              <h2>Chọn lộ trình theo mục tiêu</h2>
+              <p>Không cần đọc tuần tự nếu bạn có một mục tiêu cụ thể. Hãy chọn đường vào phù hợp, rồi quay lại bản đồ tổng thể khi cần.</p>
+              <div class=\"path-grid\">
+                <div class=\"path-card\"><span>Bản thân</span><h3>Hiểu mình và tự điều chỉnh</h3><p>Tập 1-4, 10, 31, 38, 59.</p><a href=\"#tap-1\">Bắt đầu</a></div>
+                <div class=\"path-card\"><span>Lãnh đạo</span><h3>Dùng người, giao tiếp, văn hóa</h3><p>Tập 5-7, 16, 19, 36, 49.</p><a href=\"#tap-5\">Bắt đầu</a></div>
+                <div class=\"path-card\"><span>Gia đình</span><h3>Quan hệ, con cái, tuổi thiếu niên</h3><p>Tập 8, 12, 34, 48, 55.</p><a href=\"#tap-8\">Bắt đầu</a></div>
+                <div class=\"path-card\"><span>Sản phẩm</span><h3>Hành vi, UX, AI, marketing</h3><p>Tập 14, 27, 56, 57, 58.</p><a href=\"#tap-14\">Bắt đầu</a></div>
+                <div class=\"path-card\"><span>Khoa học</span><h3>Đo lường, đọc nghiên cứu, kiểm chứng</h3><p>Tập 22, 29, 51, 52, 60.</p><a href=\"#tap-22\">Bắt đầu</a></div>
+                <div class=\"path-card\"><span>Chiều sâu</span><h3>Ý nghĩa, vô thức, trung niên, tâm linh</h3><p>Tập 26, 31, 38, 39, 40, 50.</p><a href=\"#tap-26\">Bắt đầu</a></div>
+              </div>
+            </div>
+            <div class=\"intro-panel\">
+              <h2>Cách học để nhớ và dùng được</h2>
+              <div class=\"structure-grid\">
+                <div class=\"structure-card\"><span>Bước 1</span><h3>Đọc tóm tắt nhanh</h3><p>Nắm bản chất, câu cần nhớ và câu hỏi ứng dụng trước khi đọc chi tiết.</p></div>
+                <div class=\"structure-card\"><span>Bước 2</span><h3>Gắn với một tình huống thật</h3><p>Chọn một người, một cuộc họp, một quyết định hoặc một thói quen đang diễn ra.</p></div>
+                <div class=\"structure-card\"><span>Bước 3</span><h3>Viết một insight</h3><p>Không ghi nhiều. Chỉ ghi một điều làm bạn nhìn vấn đề khác đi.</p></div>
+                <div class=\"structure-card\"><span>Bước 4</span><h3>Thử một hành vi nhỏ</h3><p>Đổi một câu hỏi, một ranh giới, một nhịp phản hồi hoặc một thiết kế môi trường.</p></div>
+                <div class=\"structure-card\"><span>Bước 5</span><h3>Review sau 7 ngày</h3><p>Điều gì đổi? Điều gì không đổi? Tầng nào cần học tiếp?</p></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class=\"overview\" id=\"learning-map\">
+          <div class=\"section-title\">
+            <h2>Bản đồ học tập</h2>
+            <p>Chọn một Chương hoặc một tập để bắt đầu. {len(chapters)} tập được sắp xếp theo {len(GROUPS)} Chương: từ nền tảng cá nhân, lãnh đạo, não bộ, hệ thống, tầng sâu đến ứng dụng mở rộng, UX, truyền thông và tư duy khoa học.</p>
+          </div>
+          <div class=\"theme-stack\" id=\"cardGrid\">{overview_cards}</div>
+          <div class=\"no-results\" id=\"noResults\">Không tìm thấy nội dung phù hợp.</div>
+        </section>
+      </div>
       {chapter_html}
       <footer>Thiết kế để học sâu: đọc một tập, ghi một insight, áp dụng một hành vi nhỏ.</footer>
     </main>
@@ -807,6 +1008,7 @@ def main() -> None:
     const chapters = [...document.querySelectorAll('.chapter')];
     const themeSections = [...document.querySelectorAll('.theme-section')];
     const navSections = [...document.querySelectorAll('.nav-section')];
+    const homeView = document.getElementById('homeView');
     const search = document.getElementById('search');
     const progressText = document.getElementById('progressText');
     const meterFill = document.getElementById('meterFill');
@@ -856,9 +1058,24 @@ def main() -> None:
       document.getElementById('noResults').style.display = visible ? 'none' : 'block';
     }});
 
+    function showHome(shouldScroll = true) {{
+      chapters.forEach(chapter => chapter.classList.remove('active-chapter'));
+      homeView.classList.remove('is-hidden');
+      navItems.forEach(item => item.classList.toggle('active', item.getAttribute('href') === '#home'));
+      document.title = 'Giáo Trình Tâm Lý Học 60 Tập | Trang Chủ';
+      if (shouldScroll) {{
+        homeView.scrollIntoView({{ block: 'start' }});
+      }}
+    }}
+
     function showChapter(hash, shouldScroll = true) {{
-      const requested = /^#tap-\\d+$/.test(hash || '') ? hash : '#tap-1';
+      if (!/^#tap-\\d+$/.test(hash || '')) {{
+        showHome(shouldScroll);
+        return;
+      }}
+      const requested = hash;
       const target = document.querySelector(requested) || document.querySelector('#tap-1');
+      homeView.classList.add('is-hidden');
       chapters.forEach(chapter => chapter.classList.toggle('active-chapter', chapter === target));
       navItems.forEach(item => item.classList.toggle('active', item.getAttribute('href') === '#' + target.id));
       document.title = `${{target.querySelector('.chapter-hero h1').textContent}} | Giáo Trình Tâm Lý Học 60 Tập`;
@@ -870,16 +1087,17 @@ def main() -> None:
     function openChapter(event) {{
       const link = event.currentTarget;
       const href = link.getAttribute('href');
-      if (!href || !href.startsWith('#tap-')) return;
+      if (!href || (!href.startsWith('#tap-') && href !== '#home')) return;
       event.preventDefault();
       if (location.hash !== href) {{
         history.pushState(null, '', href);
       }}
-      showChapter(href, true);
+      href === '#home' ? showHome(true) : showChapter(href, true);
     }}
 
     navItems.forEach(item => item.addEventListener('click', openChapter));
     cards.forEach(card => card.addEventListener('click', openChapter));
+    document.querySelectorAll('.path-card a').forEach(link => link.addEventListener('click', openChapter));
     window.addEventListener('hashchange', () => showChapter(location.hash, true));
 
     window.addEventListener('scroll', () => {{
@@ -889,7 +1107,7 @@ def main() -> None:
     }});
 
     saveProgress();
-    showChapter(location.hash || '#tap-1', false);
+    showChapter(location.hash || '#home', false);
   </script>
 </body>
 </html>"""
