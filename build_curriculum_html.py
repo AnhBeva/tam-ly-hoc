@@ -139,30 +139,49 @@ def extract_final_sentence(md: str) -> str:
 def extract_application_questions(md: str, title: str) -> list[str]:
     questions: list[str] = []
     seen = set()
+    topic = re.sub(r"^Tập\s+\d+:\s*", "", title).strip()
     cleaned = re.sub(r"\[[^\]]+\]\([^)]+\)", "", md)
 
-    for match in re.finditer(r"([^?\n|]{12,160}\?)", cleaned):
-        question = match.group(1)
-        question = re.sub(r"^[\s\-*>\d.]+", "", question).strip()
-        question = re.sub(r"\*\*|`", "", question).strip()
-        question = question.strip("| ").strip()
-        if not question or question in seen:
+    candidates: list[str] = []
+    for raw_line in cleaned.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(("#", "```", "---")):
             continue
-        if question.lower().startswith(("http", "www")):
+        parts = [cell.strip() for cell in line.strip("|").split("|")] if "|" in line else [line]
+        for part in parts:
+            if "?" not in part:
+                continue
+            for match in re.finditer(r"([^?]{10,150}\?)", part):
+                candidate = match.group(1)
+                candidate = re.sub(r"^[\s\-*>\d.]+", "", candidate).strip()
+                candidate = re.sub(r"\*\*|`|###?", "", candidate).strip()
+                candidate = candidate.strip("| ").strip()
+                if candidate:
+                    candidates.append(candidate)
+
+    for question in candidates:
+        if question in seen:
+            continue
+        lowered = question.lower()
+        if lowered.startswith(("http", "www", "vì sao c-level", "first principles")):
+            continue
+        if question.startswith(("#", "##")) or "##" in question:
+            continue
+        if len(question) < 16:
             continue
         seen.add(question)
         questions.append(question)
-        if len(questions) >= 8:
+        if len(questions) >= 4:
             break
 
     fallback = [
-        f"Tập này đang giúp tôi nhìn rõ vấn đề nào trong bản thân hoặc công việc?",
-        "Tôi đang lặp lại hành vi nào mà trước đây chưa hiểu bản chất?",
-        "Nếu áp dụng một ý duy nhất trong tuần này, tôi sẽ chọn ý nào?",
-        "Ai trong đội nhóm/gia đình sẽ được lợi nếu tôi hiểu chủ đề này tốt hơn?",
-        "Dữ kiện nào có thể kiểm chứng thay vì chỉ tin vào cảm giác của tôi?",
-        "Can thiệp nhỏ nhất tôi có thể thử trong 7 ngày tới là gì?",
-        "Nếu áp dụng sai chủ đề này, rủi ro đạo đức hoặc quan hệ là gì?",
+        f"Trong tuần này, tình huống nào liên quan trực tiếp đến {topic}?",
+        "Trong bản thân tôi, cảm xúc, hành vi hoặc quyết định nào đang lặp lại?",
+        "Trong công việc hoặc đội nhóm, chủ đề này đang xuất hiện ở đâu?",
+        "Tôi đang có giả định nào cần kiểm chứng bằng dữ kiện thay vì cảm giác?",
+        "Một câu hỏi, ranh giới hoặc hành vi nhỏ nào tôi có thể thử trong 7 ngày tới?",
+        "Ai sẽ được lợi nếu tôi áp dụng tốt bài học này?",
+        "Nếu áp dụng sai, rủi ro đạo đức, quan hệ hoặc hệ thống là gì?",
         "Tôi sẽ đo sự thay đổi bằng dấu hiệu cụ thể nào?",
     ]
     for question in fallback:
