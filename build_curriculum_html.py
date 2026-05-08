@@ -1127,6 +1127,7 @@ def main() -> None:
     const readerRateSelects = [...document.querySelectorAll('[data-reader-rate]')];
     const readerButtons = [...document.querySelectorAll('[data-reader-action]')];
     let readerVoices = [];
+    let readerVietnameseVoices = [];
     let readerRunId = 0;
     let readerState = {{
       chapter: null,
@@ -1163,6 +1164,7 @@ def main() -> None:
         const isCurrent = chapter && readerState.chapter === chapter;
         const isPlaying = isCurrent && readerState.status === 'playing';
         const isPaused = isCurrent && readerState.status === 'paused';
+        const hasVietnameseVoice = Boolean(selectedReaderVoice(card));
         card.querySelectorAll('[data-reader-action]').forEach(button => {{
           const action = button.dataset.readerAction;
           if (!supportsSpeech) {{
@@ -1170,7 +1172,7 @@ def main() -> None:
             return;
           }}
           if (action === 'play') {{
-            button.disabled = false;
+            button.disabled = !hasVietnameseVoice;
             button.textContent = isPaused ? '▶ Tiếp tục' : isPlaying ? '↻ Đọc lại' : '▶ Đọc bài';
           }}
           if (action === 'pause') {{
@@ -1184,8 +1186,15 @@ def main() -> None:
       }});
     }}
 
+    function isVietnameseVoice(voice) {{
+      const lang = (voice.lang || '').toLowerCase();
+      const name = (voice.name || '').toLowerCase();
+      return lang === 'vi-vn' || lang.startsWith('vi-') || lang === 'vi' || name.includes('vietnam') || name.includes('viet');
+    }}
+
     function populateReaderVoices() {{
       readerVoices = supportsSpeech ? speechSynthesis.getVoices() : [];
+      readerVietnameseVoices = readerVoices.filter(isVietnameseVoice);
       readerVoiceSelects.forEach(select => {{
         const previous = select.value;
         select.innerHTML = '';
@@ -1196,29 +1205,31 @@ def main() -> None:
           select.disabled = true;
           return;
         }}
-        const vietnamese = readerVoices.filter(voice => {{
-          const lang = (voice.lang || '').toLowerCase();
-          const name = (voice.name || '').toLowerCase();
-          return lang.startsWith('vi') || name.includes('vietnam') || name.includes('viet');
-        }});
-        const fallback = readerVoices.filter(voice => !vietnamese.includes(voice));
-        const ordered = [...vietnamese, ...fallback];
-        if (!ordered.length) {{
+        if (!readerVoices.length) {{
           const option = document.createElement('option');
           option.textContent = 'Đang tải giọng đọc...';
           select.append(option);
+          select.disabled = true;
           return;
         }}
-        ordered.forEach(voice => {{
+        if (!readerVietnameseVoices.length) {{
+          const option = document.createElement('option');
+          option.textContent = 'Không có giọng tiếng Việt';
+          select.append(option);
+          select.disabled = true;
+          return;
+        }}
+        select.disabled = false;
+        readerVietnameseVoices.forEach(voice => {{
           const option = document.createElement('option');
           option.value = String(readerVoices.indexOf(voice));
-          option.textContent = `${{voice.name}} (${{voice.lang || 'không rõ'}})${{vietnamese.includes(voice) ? ' - ưu tiên' : ''}}`;
+          option.textContent = `${{voice.name}} (${{voice.lang || 'vi-VN'}})`;
           select.append(option);
         }});
         if (previous && [...select.options].some(option => option.value === previous)) {{
           select.value = previous;
-        }} else if (vietnamese.length) {{
-          select.value = String(readerVoices.indexOf(vietnamese[0]));
+        }} else {{
+          select.value = String(readerVoices.indexOf(readerVietnameseVoices[0]));
         }}
       }});
       readerCards.forEach(card => {{
@@ -1226,11 +1237,10 @@ def main() -> None:
           setReaderStatus(card, 'Không hỗ trợ');
         }} else if (!readerVoices.length) {{
           setReaderStatus(card, 'Đang tải giọng');
+        }} else if (!selectedReaderVoice(card)) {{
+          setReaderStatus(card, 'Thiếu giọng Việt');
         }} else {{
-          const select = card.querySelector('[data-reader-voice]');
-          const selected = readerVoices[Number(select.value)];
-          const hasVietnamese = selected && ((selected.lang || '').toLowerCase().startsWith('vi'));
-          setReaderStatus(card, hasVietnamese ? 'Sẵn sàng' : 'Cần giọng Việt');
+          setReaderStatus(card, 'Sẵn sàng');
         }}
       }});
       updateReaderControls();
@@ -1239,7 +1249,8 @@ def main() -> None:
     function selectedReaderVoice(card) {{
       const select = card.querySelector('[data-reader-voice]');
       const index = Number(select.value);
-      return Number.isInteger(index) ? readerVoices[index] : null;
+      const voice = Number.isInteger(index) ? readerVoices[index] : null;
+      return voice && isVietnameseVoice(voice) ? voice : null;
     }}
 
     function selectedReaderRate(card) {{
@@ -1310,7 +1321,7 @@ def main() -> None:
       readerCards.forEach(card => {{
         if (card === exceptCard) return;
         setReaderProgress(card, 0);
-        if (supportsSpeech && readerVoices.length) setReaderStatus(card, 'Sẵn sàng');
+        if (supportsSpeech && selectedReaderVoice(card)) setReaderStatus(card, 'Sẵn sàng');
       }});
     }}
 
@@ -1345,10 +1356,10 @@ def main() -> None:
         return;
       }}
       const utterance = new SpeechSynthesisUtterance(readerState.chunks[readerState.index]);
-      utterance.lang = 'vi-VN';
+      utterance.lang = readerState.voice?.lang || 'vi-VN';
       utterance.rate = readerState.rate;
       utterance.pitch = 1;
-      if (readerState.voice) utterance.voice = readerState.voice;
+      utterance.voice = readerState.voice;
       utterance.onstart = () => {{
         if (runId !== readerState.runId) return;
         const pct = readerState.chunks.length ? readerState.index / readerState.chunks.length * 100 : 0;
@@ -1382,6 +1393,12 @@ def main() -> None:
         return;
       }}
       stopReader(false);
+      const voice = selectedReaderVoice(card);
+      if (!voice) {{
+        setReaderStatus(card, 'Thiếu giọng Việt');
+        updateReaderControls();
+        return;
+      }}
       const chunks = collectReaderChunks(chapter);
       if (!chunks.length) {{
         setReaderStatus(card, 'Không có nội dung');
@@ -1394,7 +1411,7 @@ def main() -> None:
         index: 0,
         status: 'playing',
         rate: selectedReaderRate(card),
-        voice: selectedReaderVoice(card),
+        voice,
         stopRequested: false,
         runId: readerRunId,
       }};
