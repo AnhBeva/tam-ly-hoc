@@ -234,41 +234,6 @@ def chapter_learning_card(chapter: dict) -> str:
     )
 
 
-def chapter_reader_card(chapter: dict) -> str:
-    return (
-        "<div class=\"reader-card\" data-reader-card>"
-        "<div class=\"reader-head\">"
-        "<div>"
-        "<span>Giọng đọc tiếng Việt</span>"
-        f"<h2>Nghe toàn bộ Tập {chapter['number']:02d}</h2>"
-        "<p>Phát từ đầu bài, gồm phần tóm tắt ứng dụng và nội dung chính của tập.</p>"
-        "</div>"
-        "<div class=\"reader-status\" data-reader-status>Chưa phát</div>"
-        "</div>"
-        "<div class=\"reader-controls\">"
-        f"<button class=\"reader-btn reader-primary\" type=\"button\" data-reader-action=\"play\" data-reader-target=\"tap-{chapter['number']}\">▶ Đọc bài</button>"
-        f"<button class=\"reader-btn\" type=\"button\" data-reader-action=\"pause\" data-reader-target=\"tap-{chapter['number']}\" disabled>⏸ Tạm dừng</button>"
-        f"<button class=\"reader-btn\" type=\"button\" data-reader-action=\"stop\" data-reader-target=\"tap-{chapter['number']}\" disabled>■ Dừng</button>"
-        "<div class=\"reader-voice-lock\">"
-        "<span>Giọng cố định</span>"
-        "<strong data-reader-voice-name>Đang kiểm tra giọng vi-VN</strong>"
-        "</div>"
-        "<label class=\"reader-select-wrap reader-rate-wrap\">"
-        "<span>Tốc độ</span>"
-        "<select class=\"reader-select\" data-reader-rate aria-label=\"Chọn tốc độ đọc\">"
-        "<option value=\"0.85\">0.85x</option>"
-        "<option value=\"1\" selected>1x</option>"
-        "<option value=\"1.15\">1.15x</option>"
-        "<option value=\"1.3\">1.3x</option>"
-        "<option value=\"1.5\">1.5x</option>"
-        "</select>"
-        "</label>"
-        "</div>"
-        "<div class=\"reader-progress\"><span data-reader-progress></span></div>"
-        "</div>"
-    )
-
-
 def parse_table(lines: list[str]) -> str:
     rows = []
     for line in lines:
@@ -600,7 +565,6 @@ def main() -> None:
         f"<article class=\"chapter\" id=\"{c['id']}\" data-chapter=\"{c['number']}\">"
         f"<div class=\"chapter-hero\"><span>Tập {c['number']:02d}</span><h1>{html.escape(display_title(c['title'], c['number']))}</h1>"
         f"<p>{html.escape(c['subtitle'])}</p>"
-        f"{chapter_reader_card(c)}"
         f"<button class=\"complete-btn\" data-complete=\"{c['number']}\">Đánh dấu đã học</button></div>"
         f"{chapter_learning_card(c)}"
         f"<div class=\"chapter-body\">{c['content']}</div>"
@@ -825,61 +789,6 @@ def main() -> None:
     .chapter-hero span {{ color: var(--blue); font-weight: 800; }}
     .chapter-hero h1 {{ margin: 12px 0; font-size: clamp(34px,5vw,64px); line-height: 1; letter-spacing: -0.025em; }}
     .chapter-hero p {{ max-width: 760px; color: #424245; font-size: 19px; line-height: 1.45; }}
-    .reader-card {{
-      margin: 26px 0 18px; padding: clamp(16px,3vw,22px); border-radius: 24px;
-      background: rgba(255,255,255,.82); border: 1px solid rgba(0,113,227,.16);
-      box-shadow: 0 14px 38px rgba(0,0,0,.055), inset 0 1px 0 rgba(255,255,255,.92);
-    }}
-    .reader-head {{
-      display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 16px;
-      margin-bottom: 16px;
-    }}
-    .reader-head span {{
-      color: var(--blue); font-size: 12px; font-weight: 900; text-transform: uppercase;
-    }}
-    .reader-head h2 {{
-      margin: 6px 0 4px; font-size: clamp(22px,2.6vw,32px); line-height: 1.08; letter-spacing: -0.01em;
-    }}
-    .reader-head p {{ margin: 0; max-width: 680px; color: var(--muted); font-size: 15px; line-height: 1.45; }}
-    .reader-status {{
-      min-width: 120px; min-height: 34px; display: grid; place-items: center; padding: 8px 11px;
-      border-radius: 999px; background: #f5f5f7; border: 1px solid var(--line);
-      color: #424245; font-size: 12px; font-weight: 800; text-align: center;
-    }}
-    .reader-status.is-playing {{ background: rgba(0,113,227,.10); color: var(--blue); border-color: rgba(0,113,227,.20); }}
-    .reader-status.is-paused {{ background: #fff8e5; color: #946200; border-color: rgba(148,98,0,.18); }}
-    .reader-controls {{
-      display: grid; grid-template-columns: repeat(3, max-content) minmax(180px,1fr) 130px; gap: 10px;
-      align-items: end;
-    }}
-    .reader-btn {{
-      min-height: 42px; border: 1px solid rgba(0,0,0,.10); border-radius: 14px;
-      background: #fff; color: #1d1d1f; padding: 10px 13px; font-size: 14px; font-weight: 800;
-      cursor: pointer; white-space: nowrap;
-    }}
-    .reader-btn:hover:not(:disabled) {{ border-color: rgba(0,113,227,.38); color: var(--blue); }}
-    .reader-btn:disabled {{ cursor: not-allowed; color: #a1a1a6; background: #f5f5f7; }}
-    .reader-primary {{ background: #1d1d1f; color: #fff; border-color: #1d1d1f; }}
-    .reader-primary:hover:not(:disabled) {{ color: #fff; background: #000; }}
-    .reader-select-wrap, .reader-voice-lock {{ display: grid; gap: 5px; min-width: 0; }}
-    .reader-select-wrap span {{ color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; }}
-    .reader-voice-lock span {{ color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; }}
-    .reader-voice-lock strong {{
-      min-height: 42px; display: flex; align-items: center; border: 1px solid rgba(0,0,0,.10);
-      border-radius: 14px; background: #fff; color: #1d1d1f; padding: 9px 11px;
-      font-size: 14px; line-height: 1.2; overflow-wrap: anywhere;
-    }}
-    .reader-select {{
-      width: 100%; min-height: 42px; border: 1px solid rgba(0,0,0,.10); border-radius: 14px;
-      background: #fff; color: #1d1d1f; padding: 9px 11px; font-size: 14px; outline: none;
-    }}
-    .reader-progress {{
-      height: 7px; border-radius: 999px; background: #e8e8ed; overflow: hidden; margin-top: 14px;
-    }}
-    .reader-progress span {{
-      display: block; height: 100%; width: 0; border-radius: inherit;
-      background: linear-gradient(90deg, var(--blue), var(--green)); transition: width .2s ease;
-    }}
     .complete-btn {{
       border: 0; border-radius: 999px; background: var(--text); color: #fff;
       padding: 12px 18px; font-weight: 700; cursor: pointer; font-size: 14px;
@@ -1017,13 +926,9 @@ def main() -> None:
       aside {{ position: relative; height: auto; max-height: 70vh; }}
       .hero {{ min-height: auto; padding-top: 46px; }}
       .hero-stats {{ grid-template-columns: 1fr; }}
-      .reader-head {{ grid-template-columns: 1fr; }}
-      .reader-status {{ justify-self: start; }}
-      .reader-controls {{ grid-template-columns: 1fr 1fr; }}
-      .reader-primary, .reader-select-wrap, .reader-voice-lock {{ grid-column: 1 / -1; }}
     }}
     @media print {{
-      aside, .complete-btn, .reader-card, .top-progress, .overview {{ display: none !important; }}
+      aside, .complete-btn, .top-progress, .overview {{ display: none !important; }}
       .app {{ display: block; }}
       .chapter {{ display: block !important; page-break-before: always; }}
       body {{ background: #fff; }}
@@ -1127,296 +1032,6 @@ def main() -> None:
     const progressText = document.getElementById('progressText');
     const meterFill = document.getElementById('meterFill');
     const topProgress = document.getElementById('topProgress');
-    const supportsSpeech = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
-    const readerCards = [...document.querySelectorAll('[data-reader-card]')];
-    const readerRateSelects = [...document.querySelectorAll('[data-reader-rate]')];
-    const readerButtons = [...document.querySelectorAll('[data-reader-action]')];
-    let readerVoices = [];
-    let lockedVietnameseVoice = null;
-    let readerRunId = 0;
-    let readerState = {{
-      chapter: null,
-      chunks: [],
-      index: 0,
-      status: 'idle',
-      rate: 1,
-      voice: null,
-      stopRequested: false,
-      runId: 0,
-    }};
-
-    function getReaderCard(chapter) {{
-      return chapter ? chapter.querySelector('[data-reader-card]') : null;
-    }}
-
-    function setReaderStatus(card, text, mode = '') {{
-      if (!card) return;
-      const status = card.querySelector('[data-reader-status]');
-      status.textContent = text;
-      status.classList.toggle('is-playing', mode === 'playing');
-      status.classList.toggle('is-paused', mode === 'paused');
-    }}
-
-    function setReaderProgress(card, pct) {{
-      if (!card) return;
-      const bar = card.querySelector('[data-reader-progress]');
-      bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
-    }}
-
-    function updateReaderControls() {{
-      readerCards.forEach(card => {{
-        const chapter = card.closest('.chapter');
-        const isCurrent = chapter && readerState.chapter === chapter;
-        const isPlaying = isCurrent && readerState.status === 'playing';
-        const isPaused = isCurrent && readerState.status === 'paused';
-        const hasVietnameseVoice = Boolean(selectedReaderVoice());
-        card.querySelectorAll('[data-reader-action]').forEach(button => {{
-          const action = button.dataset.readerAction;
-          if (!supportsSpeech) {{
-            button.disabled = true;
-            return;
-          }}
-          if (action === 'play') {{
-            button.disabled = !hasVietnameseVoice;
-            button.textContent = isPaused ? '▶ Tiếp tục' : isPlaying ? '↻ Đọc lại' : '▶ Đọc bài';
-          }}
-          if (action === 'pause') {{
-            button.disabled = !isPlaying && !isPaused;
-            button.textContent = isPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng';
-          }}
-          if (action === 'stop') {{
-            button.disabled = !isPlaying && !isPaused;
-          }}
-        }});
-      }});
-    }}
-
-    function isStrictVietnameseVoice(voice) {{
-      return (voice?.lang || '').toLowerCase() === 'vi-vn';
-    }}
-
-    function rankVietnameseVoice(voice) {{
-      const name = (voice.name || '').toLowerCase();
-      if (name === 'linh') return 0;
-      if (name.includes('linh')) return 1;
-      if (name.includes('hoaimy') || name.includes('hoài') || name.includes('an')) return 2;
-      return 3;
-    }}
-
-    function populateReaderVoices() {{
-      readerVoices = supportsSpeech ? speechSynthesis.getVoices() : [];
-      lockedVietnameseVoice = readerVoices
-        .filter(isStrictVietnameseVoice)
-        .sort((a, b) => rankVietnameseVoice(a) - rankVietnameseVoice(b))[0] || null;
-      readerCards.forEach(card => {{
-        const voiceName = card.querySelector('[data-reader-voice-name]');
-        if (!supportsSpeech) {{
-          voiceName.textContent = 'Trình duyệt không hỗ trợ đọc';
-          setReaderStatus(card, 'Không hỗ trợ');
-        }} else if (!readerVoices.length) {{
-          voiceName.textContent = 'Đang tải giọng vi-VN';
-          setReaderStatus(card, 'Đang tải giọng');
-        }} else if (!lockedVietnameseVoice) {{
-          voiceName.textContent = 'Không tìm thấy giọng vi-VN';
-          setReaderStatus(card, 'Thiếu giọng Việt');
-        }} else {{
-          voiceName.textContent = `${{lockedVietnameseVoice.name}} (${{lockedVietnameseVoice.lang}})`;
-          setReaderStatus(card, 'Sẵn sàng');
-        }}
-      }});
-      updateReaderControls();
-    }}
-
-    function selectedReaderVoice() {{
-      return lockedVietnameseVoice && isStrictVietnameseVoice(lockedVietnameseVoice) ? lockedVietnameseVoice : null;
-    }}
-
-    function selectedReaderRate(card) {{
-      const select = card.querySelector('[data-reader-rate]');
-      const rate = Number(select.value);
-      return Number.isFinite(rate) ? rate : 1;
-    }}
-
-    function cleanReaderText(text) {{
-      return text
-        .replace(/\\s+/g, ' ')
-        .replace(/([.!?])(?=\\S)/g, '$1 ')
-        .trim();
-    }}
-
-    function splitReaderText(text, maxLength = 260) {{
-      const sentences = cleanReaderText(text).match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
-      const chunks = [];
-      let current = '';
-      sentences.forEach(sentence => {{
-        const part = sentence.trim();
-        if (!part) return;
-        if ((current + ' ' + part).trim().length <= maxLength) {{
-          current = (current + ' ' + part).trim();
-          return;
-        }}
-        if (current) chunks.push(current);
-        if (part.length <= maxLength) {{
-          current = part;
-          return;
-        }}
-        for (let i = 0; i < part.length; i += maxLength) {{
-          chunks.push(part.slice(i, i + maxLength));
-        }}
-        current = '';
-      }});
-      if (current) chunks.push(current);
-      return chunks;
-    }}
-
-    function collectReaderChunks(chapter) {{
-      const selectors = [
-        '.chapter-hero h1',
-        '.chapter-hero > p',
-        '.learning-head h2',
-        '.learning-head > p',
-        '.summary-tile p',
-        '.application-questions li p',
-        '.chapter-body h2',
-        '.chapter-body h3',
-        '.chapter-body p',
-        '.chapter-body li',
-        '.chapter-body blockquote',
-        '.chapter-body th',
-        '.chapter-body td',
-        '.chapter-body .formula-card strong',
-        '.chapter-body .formula-card span',
-        '.chapter-body .flow-step strong',
-      ];
-      const segments = selectors
-        .flatMap(selector => [...chapter.querySelectorAll(selector)])
-        .map(element => cleanReaderText(element.textContent || ''))
-        .filter(Boolean);
-      return splitReaderText(segments.join('. '));
-    }}
-
-    function resetReaderCards(exceptCard = null) {{
-      readerCards.forEach(card => {{
-        if (card === exceptCard) return;
-        setReaderProgress(card, 0);
-        if (supportsSpeech && selectedReaderVoice()) setReaderStatus(card, 'Sẵn sàng');
-      }});
-    }}
-
-    function stopReader(clearProgress = false) {{
-      if (!supportsSpeech) return;
-      readerRunId += 1;
-      readerState.stopRequested = true;
-      speechSynthesis.cancel();
-      const card = getReaderCard(readerState.chapter);
-      if (card) {{
-        setReaderStatus(card, clearProgress ? 'Đã dừng' : 'Sẵn sàng');
-        if (clearProgress) setReaderProgress(card, 0);
-      }}
-      readerState.status = 'idle';
-      readerState.chapter = null;
-      readerState.chunks = [];
-      readerState.index = 0;
-      readerState.runId = readerRunId;
-      updateReaderControls();
-    }}
-
-    function speakNextReaderChunk(runId = readerState.runId) {{
-      if (runId !== readerState.runId) return;
-      if (!supportsSpeech || readerState.stopRequested || !readerState.chapter) return;
-      const card = getReaderCard(readerState.chapter);
-      if (readerState.index >= readerState.chunks.length) {{
-        setReaderProgress(card, 100);
-        setReaderStatus(card, 'Hoàn tất');
-        readerState.status = 'idle';
-        readerState.chapter = null;
-        updateReaderControls();
-        return;
-      }}
-      const utterance = new SpeechSynthesisUtterance(readerState.chunks[readerState.index]);
-      if (!isStrictVietnameseVoice(readerState.voice)) {{
-        setReaderStatus(card, 'Sai giọng đọc');
-        stopReader(true);
-        return;
-      }}
-      utterance.lang = 'vi-VN';
-      utterance.rate = readerState.rate;
-      utterance.pitch = 1;
-      utterance.voice = readerState.voice;
-      utterance.onstart = () => {{
-        if (runId !== readerState.runId) return;
-        const pct = readerState.chunks.length ? readerState.index / readerState.chunks.length * 100 : 0;
-        setReaderProgress(card, pct);
-        setReaderStatus(card, `Đang đọc ${{readerState.index + 1}}/${{readerState.chunks.length}}`, 'playing');
-        updateReaderControls();
-      }};
-      utterance.onend = () => {{
-        if (runId !== readerState.runId || readerState.stopRequested) return;
-        readerState.index += 1;
-        setReaderProgress(card, readerState.index / readerState.chunks.length * 100);
-        speakNextReaderChunk(runId);
-      }};
-      utterance.onerror = () => {{
-        if (runId !== readerState.runId || readerState.stopRequested) return;
-        setReaderStatus(card, 'Lỗi giọng đọc');
-        readerState.status = 'idle';
-        updateReaderControls();
-      }};
-      speechSynthesis.speak(utterance);
-    }}
-
-    function playReader(chapter) {{
-      if (!supportsSpeech) return;
-      const card = getReaderCard(chapter);
-      if (readerState.chapter === chapter && readerState.status === 'paused') {{
-        speechSynthesis.resume();
-        readerState.status = 'playing';
-        setReaderStatus(card, `Đang đọc ${{readerState.index + 1}}/${{readerState.chunks.length}}`, 'playing');
-        updateReaderControls();
-        return;
-      }}
-      stopReader(false);
-      const voice = selectedReaderVoice();
-      if (!voice) {{
-        setReaderStatus(card, 'Thiếu giọng Việt');
-        updateReaderControls();
-        return;
-      }}
-      const chunks = collectReaderChunks(chapter);
-      if (!chunks.length) {{
-        setReaderStatus(card, 'Không có nội dung');
-        return;
-      }}
-      readerRunId += 1;
-      readerState = {{
-        chapter,
-        chunks,
-        index: 0,
-        status: 'playing',
-        rate: selectedReaderRate(card),
-        voice,
-        stopRequested: false,
-        runId: readerRunId,
-      }};
-      resetReaderCards(card);
-      setReaderProgress(card, 0);
-      speakNextReaderChunk(readerState.runId);
-    }}
-
-    function pauseOrResumeReader(chapter) {{
-      if (!supportsSpeech || readerState.chapter !== chapter) return;
-      const card = getReaderCard(chapter);
-      if (readerState.status === 'playing') {{
-        speechSynthesis.pause();
-        readerState.status = 'paused';
-        setReaderStatus(card, 'Đã tạm dừng', 'paused');
-      }} else if (readerState.status === 'paused') {{
-        speechSynthesis.resume();
-        readerState.status = 'playing';
-        setReaderStatus(card, `Đang đọc ${{readerState.index + 1}}/${{readerState.chunks.length}}`, 'playing');
-      }}
-      updateReaderControls();
-    }}
 
     function saveProgress() {{
       localStorage.setItem('curriculumCompleted', JSON.stringify([...completed]));
@@ -1435,22 +1050,6 @@ def main() -> None:
       const id = btn.dataset.complete;
       completed.has(id) ? completed.delete(id) : completed.add(id);
       saveProgress();
-    }}));
-
-    readerButtons.forEach(button => button.addEventListener('click', () => {{
-      const chapter = document.getElementById(button.dataset.readerTarget);
-      if (!chapter) return;
-      const action = button.dataset.readerAction;
-      if (action === 'play') playReader(chapter);
-      if (action === 'pause') pauseOrResumeReader(chapter);
-      if (action === 'stop') stopReader(true);
-    }}));
-
-    readerRateSelects.forEach(select => select.addEventListener('change', () => {{
-      const chapter = select.closest('.chapter');
-      if (chapter && readerState.chapter === chapter) {{
-        readerState.rate = selectedReaderRate(getReaderCard(chapter));
-      }}
     }}));
 
     search.addEventListener('input', () => {{
@@ -1479,7 +1078,6 @@ def main() -> None:
     }});
 
     function showHome(shouldScroll = true) {{
-      if (readerState.chapter) stopReader(true);
       chapters.forEach(chapter => chapter.classList.remove('active-chapter'));
       homeView.classList.remove('is-hidden');
       navItems.forEach(item => item.classList.toggle('active', item.getAttribute('href') === '#home'));
@@ -1496,7 +1094,6 @@ def main() -> None:
       }}
       const requested = hash;
       const target = document.querySelector(requested) || document.querySelector('#tap-1');
-      if (readerState.chapter && readerState.chapter !== target) stopReader(true);
       homeView.classList.add('is-hidden');
       chapters.forEach(chapter => chapter.classList.toggle('active-chapter', chapter === target));
       navItems.forEach(item => item.classList.toggle('active', item.getAttribute('href') === '#' + target.id));
@@ -1529,11 +1126,6 @@ def main() -> None:
     }});
 
     saveProgress();
-    populateReaderVoices();
-    if (supportsSpeech) {{
-      speechSynthesis.onvoiceschanged = populateReaderVoices;
-      window.addEventListener('beforeunload', () => speechSynthesis.cancel());
-    }}
     showChapter(location.hash || '#home', false);
   </script>
 </body>
