@@ -249,10 +249,10 @@ def chapter_reader_card(chapter: dict) -> str:
         f"<button class=\"reader-btn reader-primary\" type=\"button\" data-reader-action=\"play\" data-reader-target=\"tap-{chapter['number']}\">▶ Đọc bài</button>"
         f"<button class=\"reader-btn\" type=\"button\" data-reader-action=\"pause\" data-reader-target=\"tap-{chapter['number']}\" disabled>⏸ Tạm dừng</button>"
         f"<button class=\"reader-btn\" type=\"button\" data-reader-action=\"stop\" data-reader-target=\"tap-{chapter['number']}\" disabled>■ Dừng</button>"
-        "<label class=\"reader-select-wrap\">"
-        "<span>Giọng</span>"
-        "<select class=\"reader-select\" data-reader-voice aria-label=\"Chọn giọng đọc tiếng Việt\"></select>"
-        "</label>"
+        "<div class=\"reader-voice-lock\">"
+        "<span>Giọng cố định</span>"
+        "<strong data-reader-voice-name>Đang kiểm tra giọng vi-VN</strong>"
+        "</div>"
         "<label class=\"reader-select-wrap reader-rate-wrap\">"
         "<span>Tốc độ</span>"
         "<select class=\"reader-select\" data-reader-rate aria-label=\"Chọn tốc độ đọc\">"
@@ -861,8 +861,14 @@ def main() -> None:
     .reader-btn:disabled {{ cursor: not-allowed; color: #a1a1a6; background: #f5f5f7; }}
     .reader-primary {{ background: #1d1d1f; color: #fff; border-color: #1d1d1f; }}
     .reader-primary:hover:not(:disabled) {{ color: #fff; background: #000; }}
-    .reader-select-wrap {{ display: grid; gap: 5px; min-width: 0; }}
+    .reader-select-wrap, .reader-voice-lock {{ display: grid; gap: 5px; min-width: 0; }}
     .reader-select-wrap span {{ color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; }}
+    .reader-voice-lock span {{ color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; }}
+    .reader-voice-lock strong {{
+      min-height: 42px; display: flex; align-items: center; border: 1px solid rgba(0,0,0,.10);
+      border-radius: 14px; background: #fff; color: #1d1d1f; padding: 9px 11px;
+      font-size: 14px; line-height: 1.2; overflow-wrap: anywhere;
+    }}
     .reader-select {{
       width: 100%; min-height: 42px; border: 1px solid rgba(0,0,0,.10); border-radius: 14px;
       background: #fff; color: #1d1d1f; padding: 9px 11px; font-size: 14px; outline: none;
@@ -1014,7 +1020,7 @@ def main() -> None:
       .reader-head {{ grid-template-columns: 1fr; }}
       .reader-status {{ justify-self: start; }}
       .reader-controls {{ grid-template-columns: 1fr 1fr; }}
-      .reader-primary, .reader-select-wrap {{ grid-column: 1 / -1; }}
+      .reader-primary, .reader-select-wrap, .reader-voice-lock {{ grid-column: 1 / -1; }}
     }}
     @media print {{
       aside, .complete-btn, .reader-card, .top-progress, .overview {{ display: none !important; }}
@@ -1123,11 +1129,10 @@ def main() -> None:
     const topProgress = document.getElementById('topProgress');
     const supportsSpeech = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
     const readerCards = [...document.querySelectorAll('[data-reader-card]')];
-    const readerVoiceSelects = [...document.querySelectorAll('[data-reader-voice]')];
     const readerRateSelects = [...document.querySelectorAll('[data-reader-rate]')];
     const readerButtons = [...document.querySelectorAll('[data-reader-action]')];
     let readerVoices = [];
-    let readerVietnameseVoices = [];
+    let lockedVietnameseVoice = null;
     let readerRunId = 0;
     let readerState = {{
       chapter: null,
@@ -1164,7 +1169,7 @@ def main() -> None:
         const isCurrent = chapter && readerState.chapter === chapter;
         const isPlaying = isCurrent && readerState.status === 'playing';
         const isPaused = isCurrent && readerState.status === 'paused';
-        const hasVietnameseVoice = Boolean(selectedReaderVoice(card));
+        const hasVietnameseVoice = Boolean(selectedReaderVoice());
         card.querySelectorAll('[data-reader-action]').forEach(button => {{
           const action = button.dataset.readerAction;
           if (!supportsSpeech) {{
@@ -1186,71 +1191,44 @@ def main() -> None:
       }});
     }}
 
-    function isVietnameseVoice(voice) {{
-      const lang = (voice.lang || '').toLowerCase();
+    function isStrictVietnameseVoice(voice) {{
+      return (voice?.lang || '').toLowerCase() === 'vi-vn';
+    }}
+
+    function rankVietnameseVoice(voice) {{
       const name = (voice.name || '').toLowerCase();
-      return lang === 'vi-vn' || lang.startsWith('vi-') || lang === 'vi' || name.includes('vietnam') || name.includes('viet');
+      if (name === 'linh') return 0;
+      if (name.includes('linh')) return 1;
+      if (name.includes('hoaimy') || name.includes('hoài') || name.includes('an')) return 2;
+      return 3;
     }}
 
     function populateReaderVoices() {{
       readerVoices = supportsSpeech ? speechSynthesis.getVoices() : [];
-      readerVietnameseVoices = readerVoices.filter(isVietnameseVoice);
-      readerVoiceSelects.forEach(select => {{
-        const previous = select.value;
-        select.innerHTML = '';
-        if (!supportsSpeech) {{
-          const option = document.createElement('option');
-          option.textContent = 'Trình duyệt không hỗ trợ đọc';
-          select.append(option);
-          select.disabled = true;
-          return;
-        }}
-        if (!readerVoices.length) {{
-          const option = document.createElement('option');
-          option.textContent = 'Đang tải giọng đọc...';
-          select.append(option);
-          select.disabled = true;
-          return;
-        }}
-        if (!readerVietnameseVoices.length) {{
-          const option = document.createElement('option');
-          option.textContent = 'Không có giọng tiếng Việt';
-          select.append(option);
-          select.disabled = true;
-          return;
-        }}
-        select.disabled = false;
-        readerVietnameseVoices.forEach(voice => {{
-          const option = document.createElement('option');
-          option.value = String(readerVoices.indexOf(voice));
-          option.textContent = `${{voice.name}} (${{voice.lang || 'vi-VN'}})`;
-          select.append(option);
-        }});
-        if (previous && [...select.options].some(option => option.value === previous)) {{
-          select.value = previous;
-        }} else {{
-          select.value = String(readerVoices.indexOf(readerVietnameseVoices[0]));
-        }}
-      }});
+      lockedVietnameseVoice = readerVoices
+        .filter(isStrictVietnameseVoice)
+        .sort((a, b) => rankVietnameseVoice(a) - rankVietnameseVoice(b))[0] || null;
       readerCards.forEach(card => {{
+        const voiceName = card.querySelector('[data-reader-voice-name]');
         if (!supportsSpeech) {{
+          voiceName.textContent = 'Trình duyệt không hỗ trợ đọc';
           setReaderStatus(card, 'Không hỗ trợ');
         }} else if (!readerVoices.length) {{
+          voiceName.textContent = 'Đang tải giọng vi-VN';
           setReaderStatus(card, 'Đang tải giọng');
-        }} else if (!selectedReaderVoice(card)) {{
+        }} else if (!lockedVietnameseVoice) {{
+          voiceName.textContent = 'Không tìm thấy giọng vi-VN';
           setReaderStatus(card, 'Thiếu giọng Việt');
         }} else {{
+          voiceName.textContent = `${{lockedVietnameseVoice.name}} (${{lockedVietnameseVoice.lang}})`;
           setReaderStatus(card, 'Sẵn sàng');
         }}
       }});
       updateReaderControls();
     }}
 
-    function selectedReaderVoice(card) {{
-      const select = card.querySelector('[data-reader-voice]');
-      const index = Number(select.value);
-      const voice = Number.isInteger(index) ? readerVoices[index] : null;
-      return voice && isVietnameseVoice(voice) ? voice : null;
+    function selectedReaderVoice() {{
+      return lockedVietnameseVoice && isStrictVietnameseVoice(lockedVietnameseVoice) ? lockedVietnameseVoice : null;
     }}
 
     function selectedReaderRate(card) {{
@@ -1321,7 +1299,7 @@ def main() -> None:
       readerCards.forEach(card => {{
         if (card === exceptCard) return;
         setReaderProgress(card, 0);
-        if (supportsSpeech && selectedReaderVoice(card)) setReaderStatus(card, 'Sẵn sàng');
+        if (supportsSpeech && selectedReaderVoice()) setReaderStatus(card, 'Sẵn sàng');
       }});
     }}
 
@@ -1356,7 +1334,12 @@ def main() -> None:
         return;
       }}
       const utterance = new SpeechSynthesisUtterance(readerState.chunks[readerState.index]);
-      utterance.lang = readerState.voice?.lang || 'vi-VN';
+      if (!isStrictVietnameseVoice(readerState.voice)) {{
+        setReaderStatus(card, 'Sai giọng đọc');
+        stopReader(true);
+        return;
+      }}
+      utterance.lang = 'vi-VN';
       utterance.rate = readerState.rate;
       utterance.pitch = 1;
       utterance.voice = readerState.voice;
@@ -1393,7 +1376,7 @@ def main() -> None:
         return;
       }}
       stopReader(false);
-      const voice = selectedReaderVoice(card);
+      const voice = selectedReaderVoice();
       if (!voice) {{
         setReaderStatus(card, 'Thiếu giọng Việt');
         updateReaderControls();
@@ -1467,13 +1450,6 @@ def main() -> None:
       const chapter = select.closest('.chapter');
       if (chapter && readerState.chapter === chapter) {{
         readerState.rate = selectedReaderRate(getReaderCard(chapter));
-      }}
-    }}));
-
-    readerVoiceSelects.forEach(select => select.addEventListener('change', () => {{
-      const chapter = select.closest('.chapter');
-      if (chapter && readerState.chapter === chapter) {{
-        readerState.voice = selectedReaderVoice(getReaderCard(chapter));
       }}
     }}));
 
