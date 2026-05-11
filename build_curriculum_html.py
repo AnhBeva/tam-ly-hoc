@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 OUTPUT = ROOT / "Giao-trinh-tam-ly-hoc-60-tap.html"
+GLOSSARY = ROOT / "Thuat-ngu-tam-ly-hoc.md"
 
 
 GROUPS = [
@@ -487,6 +488,19 @@ def display_title(title: str, number: int) -> str:
     return title.replace("Tập " + str(number) + ": ", "")
 
 
+def glossary_search_text(md: str) -> str:
+    terms: list[str] = ["bảng thuật ngữ", "tra cứu", "khái niệm cốt lõi"]
+    for line in md.splitlines():
+        if not line.startswith("| "):
+            continue
+        if line.startswith("| Thuật ngữ") or line.startswith("|---"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) >= 2:
+            terms.extend([cells[0], cells[1]])
+    return re.sub(r"\s+", " ", " ".join(terms)).strip().lower()
+
+
 def main() -> None:
     files = sorted(
         [ROOT / "Giao-trinh-hieu-con-nguoi-tu-goc.md", *ROOT.glob("Tap-*.md")],
@@ -537,6 +551,30 @@ def main() -> None:
         + "\n"
         + "\n".join(nav_sections)
     )
+
+    glossary_html = ""
+    if GLOSSARY.exists():
+        glossary_md = GLOSSARY.read_text(encoding="utf-8")
+        glossary_content, _glossary_toc = convert_markdown(glossary_md, "glossary")
+        glossary_title, glossary_subtitle = chapter_intro(glossary_md)
+        glossary_search = html.escape(glossary_search_text(glossary_md))
+        nav_items += (
+            "\n"
+            "<div class=\"nav-section glossary-nav\">"
+            "<div class=\"nav-heading\">Phụ Lục<b>Tra Cứu</b></div>"
+            f"<a class=\"nav-item\" href=\"#glossary\" data-chapter=\"glossary\" data-title=\"{glossary_search}\">"
+            "<span>◇</span><strong>Bảng Thuật Ngữ</strong></a>"
+            "</div>"
+        )
+        glossary_html = (
+            "<article class=\"chapter\" id=\"glossary\" data-chapter=\"glossary\">"
+            "<div class=\"chapter-hero\"><span>Phụ lục</span>"
+            f"<h1>{html.escape(glossary_title.lstrip('# ').strip())}</h1>"
+            f"<p>{html.escape(glossary_subtitle or 'Bảng tra cứu thuật ngữ cốt lõi của giáo trình.')}</p>"
+            "</div>"
+            f"<div class=\"chapter-body glossary-body\">{glossary_content}</div>"
+            "</article>"
+        )
 
     group_sections = []
     for group_index, (group_title, group_desc, number_range) in enumerate(GROUPS, 1):
@@ -1015,6 +1053,7 @@ def main() -> None:
         </section>
       </div>
       {chapter_html}
+      {glossary_html}
       <footer>Thiết kế để học sâu: đọc một tập, ghi một insight, áp dụng một hành vi nhỏ.</footer>
     </main>
   </div>
@@ -1088,7 +1127,7 @@ def main() -> None:
     }}
 
     function showChapter(hash, shouldScroll = true) {{
-      if (!/^#tap-\\d+$/.test(hash || '')) {{
+      if (!/^#tap-\\d+$/.test(hash || '') && hash !== '#glossary') {{
         showHome(shouldScroll);
         return;
       }}
@@ -1106,7 +1145,7 @@ def main() -> None:
     function openChapter(event) {{
       const link = event.currentTarget;
       const href = link.getAttribute('href');
-      if (!href || (!href.startsWith('#tap-') && href !== '#home')) return;
+      if (!href || (!href.startsWith('#tap-') && href !== '#home' && href !== '#glossary')) return;
       event.preventDefault();
       if (location.hash !== href) {{
         history.pushState(null, '', href);
